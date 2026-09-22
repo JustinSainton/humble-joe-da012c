@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Humble Joe — RockPoint Church</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+
+  :root {
+    --cream: #f6f1e8;
+    --cream-2: #fffbf5;
+    --ink: #2a2723;
+    --muted: #6f685e;
+    --wood: #b58f5e;
+    --wood-deep: #8e6c42;
+    --dark: #181614;
+    --line: rgba(42,39,35,.12);
+    --shadow: 0 18px 40px rgba(24,22,20,.16);
+    --stage: min(68rem, 100%);
+    --pad-x: clamp(1.1rem, 4vw, 3.5rem);
+    --pad-y: clamp(1.1rem, 3.5vh, 2.75rem);
+    --gap: clamp(.75rem, 1.8vh, 1.15rem);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--dark); color: var(--ink); font-family: Outfit, system-ui, sans-serif; }
+  .deck {
+    height: 100svh;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  .slide {
+    min-height: 100svh;
+    height: 100svh;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: var(--pad-y) var(--pad-x);
+    overflow: hidden;
+  }
+  .slide.cream { background: var(--cream); }
+  .slide.dark { background: var(--dark); color: var(--cream-2); }
+  .slide.photo {
+    padding: 0;
+    justify-content: flex-end;
+    background-size: cover;
+    background-position: center;
+  }
+  /* Centered content frame — prevents iMac-wide empty oceans */
+  .stage {
+    width: var(--stage);
+    max-width: 100%;
+    margin-inline: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--gap);
+  }
+  .stage > .eyebrow { margin-bottom: 0; }
+  .stage > h1, .stage > h2 { margin-bottom: 0; }
+  .photo-veil {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(24,22,20,.35) 0%, rgba(24,22,20,.55) 28%, rgba(24,22,20,.94) 100%);
+  }
+  .photo .list { gap: clamp(.4rem, 1vh, .65rem); margin-top: clamp(.65rem, 1.8vh, 1rem); max-width: 48rem; }
+  .photo .list li { color: rgba(246,241,232,.78); font-size: clamp(.8rem, 1.05vw, .94rem); line-height: 1.38; }
+  .photo .list li strong { color: #fffbf5; }
+  .photo .list .num { color: var(--wood); }
+  .photo-caption .lede { color: rgba(246,241,232,.8); margin-top: .55rem; max-width: 40rem; }
+  @media (max-height: 720px) {
+    .photo .list li { font-size: .78rem; }
+    .photo .list { gap: .35rem; }
+  }
+  @media (max-width: 640px) {
+    .photo-caption { padding-bottom: 4.5rem; }
+    .photo .list li { font-size: .8rem; }
+  }
+  .photo-caption {
+    position: relative; z-index: 2;
+    width: var(--stage);
+    max-width: 100%;
+    margin-inline: auto;
+    padding: clamp(1.5rem, 4vh, 2.75rem) var(--pad-x) clamp(1.75rem, 4vh, 3rem);
+  }
+  .eyebrow {
+    font-size: clamp(.68rem, 1.1vw, .78rem);
+    letter-spacing: .16em; text-transform: uppercase;
+    color: var(--wood); font-weight: 500;
+  }
+  h1 {
+    font-family: Fraunces, Georgia, serif;
+    font-weight: 550;
+    font-size: clamp(2.2rem, 5.5vw, 4.4rem);
+    line-height: 1.05; letter-spacing: -.02em;
+  }
+  h2 {
+    font-family: Fraunces, Georgia, serif;
+    font-weight: 550;
+    font-size: clamp(1.55rem, 3.2vw, 2.65rem);
+    line-height: 1.12; letter-spacing: -.015em;
+  }
+  h3 {
+    font-family: Fraunces, Georgia, serif;
+    font-weight: 550;
+    font-size: clamp(1.05rem, 1.5vw, 1.2rem);
+    margin-bottom: .35rem;
+  }
+  .lede {
+    font-size: clamp(.98rem, 1.35vw, 1.2rem);
+    line-height: 1.5; color: var(--muted); max-width: 42rem; font-weight: 300;
+  }
+  .dark .lede { color: rgba(246,241,232,.72); }
+  .grid-2, .grid-3, .grid-4, .grid-7, .pillars, .two-col, .cluster {
+    display: grid;
+    gap: var(--gap);
+    width: 100%;
+  }
+  .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .grid-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .pillars { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .two-col { grid-template-columns: 1.15fr .85fr; align-items: start; }
+  .cluster { grid-template-columns: 1fr; }
+  .card {
+    background: var(--cream-2); border: 1px solid var(--line);
+    border-radius: clamp(.75rem, 1.2vw, 1rem);
+    padding: clamp(.95rem, 1.6vh, 1.25rem) clamp(1rem, 1.5vw, 1.25rem);
+    height: 100%;
+  }
+  .dark .card { background: rgba(255,251,245,.05); border-color: rgba(255,251,245,.1); }
+  .card.featured {
+    background: var(--dark); color: var(--cream-2); border: none;
+    box-shadow: var(--shadow);
+  }
+  .card.featured .meta { color: var(--wood); }
+  .meta {
+    color: var(--wood-deep); font-size: clamp(.68rem, 1vw, .78rem);
+    letter-spacing: .08em; text-transform: uppercase; font-weight: 500; margin-bottom: .45rem;
+  }
+  .price {
+    font-family: Fraunces, serif;
+    font-size: clamp(1.55rem, 2.4vw, 2rem);
+    color: var(--wood-deep); margin: .25rem 0 .4rem;
+  }
+  .card.featured .price { color: var(--wood); }
+  .card p, .body {
+    font-size: clamp(.88rem, 1.15vw, .98rem);
+    line-height: 1.45; color: var(--muted); font-weight: 300;
+  }
+  .dark .card p, .dark .body { color: rgba(246,241,232,.7); }
+  .split {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+    flex: 1; min-height: 0; width: 100vw; margin-left: calc(50% - 50vw);
+  }
+  .split > div {
+    padding: var(--pad-y) clamp(1.25rem, 4vw, 3.25rem);
+    display: flex; flex-direction: column; justify-content: center;
+    max-width: 36rem; margin-inline: auto; width: 100%;
+  }
+  .split img {
+    width: 100%; height: 100svh; object-fit: cover; display: block;
+  }
+  .list { list-style: none; display: flex; flex-direction: column; gap: clamp(.55rem, 1.4vh, .85rem); }
+  .list li {
+    display: grid; grid-template-columns: 2rem 1fr; gap: .75rem; align-items: start;
+    font-size: clamp(.92rem, 1.2vw, 1.02rem); line-height: 1.4; color: var(--muted); font-weight: 300;
+  }
+  .list li strong {
+    color: var(--ink); font-weight: 500; display: block; margin-bottom: .1rem;
+    font-family: Fraunces, serif; font-size: 1.02em;
+  }
+  .dark .list li strong { color: var(--cream-2); }
+  .num { color: var(--wood); font-family: Fraunces, serif; font-size: 1.05rem; padding-top: .05rem; }
+  table { width: 100%; border-collapse: collapse; font-size: clamp(.82rem, 1.1vw, .94rem); }
+  th, td { text-align: left; padding: clamp(.45rem, 1vh, .65rem) .35rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--wood-deep); font-weight: 500; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
+  td.amt { font-family: Fraunces, serif; white-space: nowrap; color: var(--ink); }
+  .note { font-size: clamp(.72rem, 1vw, .82rem); color: var(--muted); line-height: 1.4; }
+  .progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: linear-gradient(90deg, var(--wood), var(--wood-deep));
+    z-index: 50;
+  }
+  .hud {
+    position: fixed; right: max(.75rem, env(safe-area-inset-right));
+    bottom: max(.75rem, env(safe-area-inset-bottom)); z-index: 40;
+    display: flex; gap: .4rem; align-items: center;
+    background: rgba(24,22,20,.82); color: var(--cream-2);
+    backdrop-filter: blur(10px); border-radius: 999px;
+    padding: .4rem .5rem .4rem .9rem; font-size: .72rem; letter-spacing: .06em;
+  }
+  .hud button {
+    border: 0; background: rgba(255,251,245,.12); color: var(--cream-2);
+    width: 1.85rem; height: 1.85rem; border-radius: 999px; cursor: pointer; font-size: .95rem;
+  }
+  .hud button:hover { background: var(--wood); color: var(--dark); }
+  .pillar {
+    padding: clamp(.9rem, 1.5vh, 1.15rem);
+    border-top: 2px solid var(--wood);
+    background: rgba(255,251,245,.55);
+    border-radius: 0 0 .75rem .75rem;
+  }
+  .pillar h3 { color: var(--wood-deep); }
+  .value-row {
+    display: grid; grid-template-columns: minmax(8.5rem, 11rem) 1fr;
+    gap: .85rem; padding: clamp(.55rem, 1.2vh, .8rem) 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .value-row h3 { margin: 0; color: var(--wood-deep); font-size: clamp(.95rem, 1.3vw, 1.1rem); }
+  .stack { display: flex; flex-direction: column; gap: var(--gap); }
+  .stack.tight { gap: .65rem; }
+
+  /* Staffing / dense multi-band layouts */
+  .band { display: grid; gap: var(--gap); }
+  .band-top { grid-template-columns: 1.15fr .85fr; }
+  .band-roles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  /* Large desktop: keep content as a centered block, not stretched */
+  @media (min-width: 1100px) {
+    :root { --stage: min(70rem, 92vw); --gap: clamp(.85rem, 1.6vh, 1.25rem); }
+  }
+  @media (min-width: 1500px) {
+    :root { --stage: min(74rem, 88vw); }
+    h1 { font-size: clamp(3rem, 4vw, 4.6rem); }
+  }
+
+  /* Tablet */
+  @media (max-width: 980px) {
+    .grid-4, .pillars { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-7 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3, .band-roles { grid-template-columns: 1fr; }
+    .two-col, .band-top, .grid-2 { grid-template-columns: 1fr; }
+    .value-row { grid-template-columns: 1fr; gap: .25rem; }
+    .split { grid-template-columns: 1fr; }
+    .split img { height: min(42svh, 22rem); }
+    .split > div { max-width: var(--stage); padding-block: 1.25rem; }
+    .slide.bleed { height: auto; min-height: 100svh; overflow: auto; }
+  }
+
+  /* Phone */
+  @media (max-width: 640px) {
+    :root { --pad-x: 1rem; --pad-y: 1rem; --gap: .7rem; }
+    .slide {
+      height: auto;
+      min-height: 100svh;
+      overflow: auto;
+      padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
+    }
+    .stage { justify-content: flex-start; padding-top: .25rem; }
+    .pillars, .grid-4, .grid-7, .grid-3, .grid-2, .band-roles, .band-top { grid-template-columns: 1fr; }
+    .hud { transform: scale(.95); transform-origin: bottom right; }
+    .card.featured h2 { font-size: 1.35rem !important; }
+  }
+
+  /* Prefer reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .deck { scroll-behavior: auto; }
+  }
+
+
+  /* Slide 16 — readable diligence cards */
+  .diligence {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(.65rem, 1.4vh, .95rem);
+    width: 100%;
+  }
+  .diligence .card {
+    background: var(--cream-2);
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    padding: clamp(1rem, 1.8vh, 1.35rem) clamp(1.05rem, 1.6vw, 1.35rem);
+  }
+  .diligence .card .meta {
+    margin-bottom: 0;
+    color: var(--wood-deep);
+  }
+  .diligence .card h3 {
+    margin: 0;
+    font-size: clamp(1.05rem, 1.45vw, 1.22rem);
+    line-height: 1.2;
+    color: var(--ink);
+  }
+  .diligence .card p {
+    margin: 0;
+    font-size: clamp(.88rem, 1.12vw, .98rem);
+    line-height: 1.48;
+    color: var(--muted);
+  }
+  .diligence .card:last-child { grid-column: 1 / -1; }
+  @media (min-width: 1100px) {
+    .diligence { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .diligence .card { grid-column: span 2; }
+    .diligence .card:nth-child(4),
+    .diligence .card:nth-child(5) { grid-column: span 3; }
+    .diligence .card:last-child { grid-column: span 3; }
+  }
+  @media (max-width: 700px) {
+    .diligence { grid-template-columns: 1fr; }
+    .diligence .card:last-child { grid-column: auto; }
+  }
+  @media (max-height: 760px) {
+    .diligence .card p { font-size: .84rem; line-height: 1.4; }
+    .diligence .card { padding: .85rem 1rem; }
+  }
+
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="hud"><span id="count">1 / 16</span>
+  <button type="button" id="prev" aria-label="Previous">↑</button>
+  <button type="button" id="next" aria-label="Next">↓</button>
+</div>
+<main class="deck" id="deck">
+
+  <!-- 1 -->
+  <section class="slide dark">
+    <div class="stage">
+<div class="eyebrow">RockPoint Church · Newberg, Oregon</div>
+    <h1>Humble Joe</h1>
+    <p class="lede">A portable café ministry — small but beautiful, tear-downable, and rooted in who we already are.</p>
+    <p class="lede" style="margin-top:1.5rem;color:var(--wood)">Believe · Belong · Become · Be Sent</p>
+    <p class="note" class="note" style="color:rgba(246,241,232,.45);margin-top:clamp(1rem,4vh,2.5rem)">Stakeholder briefing · September 2026 · Planning draft — not legal or tax advice</p>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide photo" style="background-image:url('assets/hero-menu.png')">
+    <div class="photo-veil"></div>
+    <div class="photo-caption">
+      <div class="eyebrow">The vision</div>
+      <h2 style="color:#fffbf5">Warming a 7,200 sq ft shell into a Church Home living room</h2>
+      <p class="lede">Light wood · dark menu · plants & art · barista behind the counter · portable</p>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide cream">
+    <div class="stage">
+<div class="eyebrow">Why this exists</div>
+    <h2>Not a side hustle. A ministry expression of RockPoint.</h2>
+    <p class="lede">Humble Joe is how the multipurpose building practices Believe / Belong / Become / Be Sent midweek and on Sundays — hospitality with a face, beauty that invites presence, and a front door for Newberg.</p>
+    <div class="pillars">
+      <div class="pillar"><h3>Believe</h3><p>A calm space where conversations about Jesus can begin without a stage.</p></div>
+      <div class="pillar"><h3>Belong</h3><p>Couches, coffee, and presence — Church Home you can sit in.</p></div>
+      <div class="pillar"><h3>Become</h3><p>Training, volunteering, and hosted rhythms that form people.</p></div>
+      <div class="pillar"><h3>Be Sent</h3><p>Neighbors and George Fox students meet RockPoint before a service.</p></div>
+    </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide cream">
+    <div class="stage">
+<div class="grid-2">
+      <div class="stack">
+        <div class="eyebrow">The name</div>
+        <h2>Humble Joe</h2>
+        <ul class="list">
+          <li><span class="num">01</span><div><strong>Joseph</strong> Quiet faithfulness beside Mary’s story.</div></li>
+          <li><span class="num">02</span><div><strong>Humility</strong> The posture we want guests to feel when they walk in.</div></li>
+          <li><span class="num">03</span><div><strong>Contrast</strong> An intentional foil to the coffee brand “Proud Mary.”</div></li>
+          <li><span class="num">04</span><div><strong>Under RockPoint</strong> Not a spin-out brand — unless a clear reason later says otherwise.</div></li>
+        </ul>
+      </div>
+      <div class="card featured" style="display:flex;flex-direction:column;justify-content:center;min-height:0">
+        <div class="meta">Design lock</div>
+        <h2 style="color:#fffbf5;font-size:2rem">Small but fancy.<br/>Portable.<br/>On mission.</h2>
+        <p style="margin-top:1rem;color:rgba(246,241,232,.7)">300–400 sq ft of living-room café inside an industrial shell — beauty without a permanent build-out.</p>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide cream">
+    <div class="stage">
+<div class="eyebrow">The space</div>
+    <h2>7,200 sq ft shell → 300–400 sq ft living room</h2>
+    <div class="stack">
+      <div class="card"><div class="meta">Building</div><h3>~7,200 sq ft · ~120 × 60 · pole-barn multipurpose</h3><p>Drywall interior, concrete floors, metal trusses — industrial until we warm it.</p></div>
+      <div class="card"><div class="meta">Humble Joe zone</div><h3>300–400 sq ft soft corner</h3><p>Rug + furniture boundary — not drywall. Tear-downable for youth, worship, events.</p></div>
+      <div class="card"><div class="meta">Service</div><h3>~40–60 sq ft counter</h3><p>Small fancy espresso (Linea Mini class), grinder, cold holding, POS. Barista behind the counter.</p></div>
+      <div class="card"><div class="meta">Tear-down rule</div><h3>Casters + fold-down wood skirts</h3><p>Hall clears in ~60–90 minutes once practiced. Skirts hide wheels when parked — living room, not waiting room.</p></div>
+    </div>
+    </div>
+  </section>
+
+  <!-- 6 menu split -->
+  <section class="slide cream" style="padding:0">
+    <div class="split">
+      <img src="assets/menu-detail.png" alt="Humble Joe dark menu board with cream type" />
+      <div>
+        <div class="eyebrow">Design language</div>
+        <h2>Beauty that serves presence</h2>
+        <ul class="list">
+          <li><span class="num">01</span><div><strong>Light woods</strong> Pale oak / ash — counter, tables, slim shelf.</div></li>
+          <li><span class="num">02</span><div><strong>Dark menu</strong> Charcoal board, cream type — quiet and readable.</div></li>
+          <li><span class="num">03</span><div><strong>Art & foliage</strong> Gallery wall, hanging plants, warm lamps.</div></li>
+          <li><span class="num">04</span><div><strong>Small fancy espresso</strong> Compact prosumer / mini-commercial — not a multi-group bar.</div></li>
+          <li><span class="num">05</span><div><strong>Clear geometry</strong> Guests on one side; barista on the other.</div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 values overview -->
+  <section class="slide cream">
+    <div class="stage">
+<div class="eyebrow">RockPoint core values · rockpt.org/core-values</div>
+    <h2>Humble Joe is values with furniture</h2>
+    <div class="grid-7">
+      <div class="card"><div class="meta">01</div><h3>Passionate Worship</h3><p>Beauty & presence before and after we gather.</p></div>
+      <div class="card"><div class="meta">02</div><h3>Fervent Prayer</h3><p>Open before pre-service prayer.</p></div>
+      <div class="card"><div class="meta">03</div><h3>Biblical Teaching</h3><p>Hosted tables where the Word continues.</p></div>
+      <div class="card"><div class="meta">04</div><h3>Spirit-Filled Life</h3><p>Hospitality as Spirit-empowered welcome.</p></div>
+      <div class="card"><div class="meta">05</div><h3>Family-Oriented</h3><p>Seating and rhythms for every age.</p></div>
+      <div class="card"><div class="meta">06</div><h3>Mission-Minded</h3><p>Front door for Newberg & George Fox.</p></div>
+      <div class="card"><div class="meta">07</div><h3>Church Home</h3><p>The living room of the house of faith.</p></div>
+    </div>
+    </div>
+  </section>
+
+  <!-- 8 values deep -->
+  <section class="slide cream">
+    <div class="stage">
+<div class="eyebrow">Values → practice</div>
+    <h2>How each value shows up</h2>
+    <div>
+      <div class="value-row"><h3>Passionate Worship</h3><p class="body">Atmosphere that prepares hearts — beauty, soft mornings, lingering after the amen so worship doesn’t end at dismissal.</p></div>
+      <div class="value-row"><h3>Fervent Prayer</h3><p class="body">Sunday open before pre-service prayer. Space for quiet asks, pairs, and post-service prayer over coffee.</p></div>
+      <div class="value-row"><h3>Biblical Teaching</h3><p class="body">Not a second sanctuary — a table where teaching continues: hosted evenings, huddles, “what did you hear today?”</p></div>
+      <div class="value-row"><h3>Spirit-Filled Life</h3><p class="body">Welcome, discernment, encouragement. Volunteers serve from giftedness — not as free commercial labor.</p></div>
+      <div class="value-row"><h3>Family-Oriented</h3><p class="body">Seats for kids-to-grandparents. After-service lingering. Midweek for parents, youth, Equip nights.</p></div>
+      <div class="value-row"><h3>Mission-Minded</h3><p class="body">Differentiate on presence and programming — not by out-competing downtown cafés on third-wave flex.</p></div>
+      <div class="value-row"><h3>Church Home</h3><p class="body">Church Home you can smell the coffee in — authentic community under the gospel, with a pour spout.</p></div>
+    </div>
+    </div>
+  </section>
+
+  <!-- 9 research -->
+  <section class="slide cream">
+    <div class="stage">
+<div class="eyebrow">Local research</div>
+    <h2>Oregon prior art — and a Newberg gap</h2>
+    <div class="grid-3">
+      <div class="card"><div class="meta">Portland</div><h3>Taborspace / Bell Tower</h3><p>Mt. Tabor Presbyterian — church nonprofit café + training; neighborhood front door.</p></div>
+      <div class="card"><div class="meta">Gresham</div><h3>Legacy Coffee & Books</h3><p>Church-owned with separate board; profits to community nonprofits — governance clarity.</p></div>
+      <div class="card"><div class="meta">Portland</div><h3>Heretic Coffee Co.</h3><p>501(c)(3) café; training + hospitality posture; beauty with mission.</p></div>
+    </div>
+    <div class="card featured">
+      <div class="meta">Newberg opportunity</div>
+      <p style="color:rgba(246,241,232,.85);font-size:1.05rem;line-height:1.5;font-weight:300">Real café competition near downtown / George Fox. No published church–café case study inside city limits — room to lead as Church Home + Mission-Minded, not as another third-wave competitor.</p>
+    </div>
+    </div>
+  </section>
+
+  <!-- 10 permitting -->
+  <section class="slide cream">
+    <div class="stage">
+<div class="eyebrow">Permitting · primary sources</div>
+    <h2>Do it clean</h2>
+    <table>
+      <thead><tr><th>Layer</th><th>What</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Yamhill County EH</strong></td><td>Plan review + permanent restaurant license if standing public hours</td><td>yamhillcounty.gov · 503-434-7525</td></tr>
+        <tr><td><strong>Oregon / OHA</strong></td><td>Food Sanitation Rules + food handler cards ($10 / 3 yrs)</td><td>oha.oregon.gov</td></tr>
+        <tr><td><strong>City of Newberg</strong></td><td>Business license; building permits only if remodel / change of use</td><td>Portable path minimizes construction</td></tr>
+        <tr><td><strong>Skip at launch</strong></td><td>OLCC alcohol; benevolent temporary (ORS 624.106) is for events only</td><td>Not a substitute for standing ops</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Three non-negotiables: license for real · keep books clear (hospitality / retail / rental) · pay the craft (one paid operator + capped volunteers).</p>
+    </div>
+  </section>
+
+  <!-- 11 startup -->
+  <section class="slide cream">
+    <div class="stage">
+<div class="eyebrow">Investment · startup</div>
+    <h2>Portable path — not a build-out</h2>
+    <p class="lede">Planning ranges from 2025–26 published equipment & retail pricing. Not quotes.</p>
+    <div class="grid-3">
+      <div class="card"><div class="meta">Lean elevated</div><div class="price">$18–30k</div><p>Strong prosumer machine, good furniture, light branding.</p></div>
+      <div class="card featured"><div class="meta">Preferred</div><div class="price">$32–48k</div><p>Linea Mini–class espresso, beautiful lounge, insurance + runway.</p></div>
+      <div class="card"><div class="meta">Premium portable</div><div class="price">$50–65k</div><p>Custom carts/shelves, richer seating, more capital.</p></div>
+    </div>
+    <p class="note">Traditional build-out ($80k–$250k+) is not the plan. Ministry ROI &gt; max espresso volume.</p>
+    </div>
+  </section>
+
+  <!-- 12 startup detail -->
+  <section class="slide cream">
+    <div class="stage">
+<div class="eyebrow">Startup · preferred band detail</div>
+    <h2>Where $32–48k goes</h2>
+    <div class="grid-3">
+      <div class="card"><div class="meta">Espresso & cold</div><p>Linea Mini–class ~$6.6k<br/>Grinder $1.6–2.7k<br/>Undercounter $1.9–2.5k<br/>Water + tools $0.7–1.5k<br/><strong style="color:var(--ink)">Subtotal ~$10.8–13.3k</strong></p></div>
+      <div class="card"><div class="meta">Furniture & vibe</div><p>Counter $0.8–2.5k<br/>Sofas / chairs $1.6–4k<br/>Tables, slim shelf, lamps<br/>Rug, plants, art, menu<br/><strong style="color:var(--ink)">Subtotal ~$4.3–12.4k</strong></p></div>
+      <div class="card"><div class="meta">Ops soft costs</div><p>Yamhill + Newberg licenses*<br/>Insurance rider<br/>POS + first inventory<br/>Brand + contingency<br/>Working capital 1–2 mo.<br/><strong style="color:var(--ink)">Subtotal ~$6.6–20k</strong></p></div>
+    </div>
+    <p class="note">*Confirm Yamhill permanent plan-review + annual license line items from the current fee PDF before locking budget.</p>
+    </div>
+  </section>
+
+  <!-- 13 ONGOING -->
+  <section class="slide cream">
+    <div class="stage">
+<div class="eyebrow">Investment · ongoing (monthly)</div>
+    <h2>Run-rate after open — church-embedded model</h2>
+    <p class="lede">Unlike a commercial café, Humble Joe carries <strong style="color:var(--ink);font-weight:500">no market rent</strong>. Costs below are planning ranges for modest hours inside RockPoint’s building.</p>
+    <div class="two-col">
+      <div>
+        <table>
+          <thead><tr><th>Line</th><th>Monthly range</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Paid café lead</td><td class="amt">$1,200–2,400</td><td>~15–25 hrs/wk</td></tr>
+            <tr><td>Part-time barista</td><td class="amt">$0–1,200</td><td>As volume grows</td></tr>
+            <tr><td>COGS (beans, milk, cups)</td><td class="amt">$800–3,500</td><td>~28–35% of sales</td></tr>
+            <tr><td>Utilities (incremental)</td><td class="amt">$100–350</td><td>Espresso, fridge, lights</td></tr>
+            <tr><td>Insurance rider</td><td class="amt">$40–180</td><td>Product / GL add-on</td></tr>
+            <tr><td>Processing, supplies, maint.</td><td class="amt">$150–450</td><td>Cards, filters, cleaning</td></tr>
+            <tr><td>Rent</td><td class="amt">$0</td><td>Church space</td></tr>
+            <tr><td><strong>Total run-rate</strong></td><td class="amt"><strong>$2.3–8k</strong></td><td>Modest → busier months</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="stack">
+        <div class="card featured">
+          <div class="meta">Break-even sketch</div>
+          <p style="color:rgba(246,241,232,.85);line-height:1.55;font-weight:300">At ~$4.50 average ticket and ~$3,500/mo fixed+semi-fixed (lean month), you need roughly <strong style="color:var(--wood)">~780 tickets / month</strong> (~26 / day across open days) before contribution covers the floor — far below a rented storefront café.</p>
+        </div>
+        <div class="card">
+          <div class="meta">Industry context</div>
+          <p>Full commercial shops often burn $15–35k/mo with rent + full payroll. Our advantage is occupancy at $0 and part-time labor — ministry model, not mall café.</p>
+        </div>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <!-- 14 rhythm -->
+  <section class="slide cream">
+    <div class="stage">
+<div class="eyebrow">People & rhythm</div>
+    <h2>Sustainable staffing — on mission</h2>
+    <div class="band band-top">
+      <div class="card featured">
+        <div class="meta">Sunday rhythm</div>
+        <h2 style="color:#fffbf5;font-size:clamp(1.35rem,2.4vw,1.85rem);margin:0.45rem 0 0.55rem">Open before pre-service prayer — and again after service</h2>
+        <p style="color:rgba(246,241,232,.7)">Hospitality window — not retail during the service itself.</p>
+      </div>
+      <div class="card">
+        <div class="meta">Sample week</div>
+        <p>Tue–Sat — daytime corner open<br/>One hosted evening — discipleship / community<br/>Sunday — before prayer + after service<br/>Monday — tear-down / deep clean / hall reset</p>
+      </div>
+    </div>
+    <div class="band band-roles">
+      <div class="card"><h3>Paid café lead</h3><p>Quality, open/close, food safety, cash.</p></div>
+      <div class="card"><h3>Part-time barista</h3><p>Peak mornings as volume grows.</p></div>
+      <div class="card"><h3>Volunteers</h3><p>Hospitality & hosted nights — not free baristas covering commercial volume.</p></div>
+    </div>
+    </div>
+  </section>
+
+  <!-- 15 recommendation -->
+  <section class="slide dark">
+    <div class="stage">
+<div class="eyebrow">Recommendation</div>
+    <h2 style="color:#fffbf5">Eight moves</h2>
+    <ul class="list">
+      <li><span class="num">01</span><div><strong style="color:#fffbf5">Operate under RockPoint</strong> Portable 300–400 sq ft in the 7,200 shell.</div></li>
+      <li><span class="num">02</span><div><strong style="color:#fffbf5">Design lock</strong> Light woods, dark menu, plants, lamps, art, wheeled furniture, small fancy espresso, barista behind the counter.</div></li>
+      <li><span class="num">03</span><div><strong style="color:#fffbf5">Values in the rhythm</strong> Especially Church Home, Fervent Prayer, and Mission-Minded.</div></li>
+      <li><span class="num">04</span><div><strong style="color:#fffbf5">Sunday windows</strong> Before pre-service prayer and after service.</div></li>
+      <li><span class="num">05</span><div><strong style="color:#fffbf5">Budget</strong> Preferred ~$32–48k startup + plan for ~$2.5–8k/mo ongoing.</div></li>
+      <li><span class="num">06</span><div><strong style="color:#fffbf5">Pre-open</strong> Yamhill plan review + Newberg business license; stay portable.</div></li>
+      <li><span class="num">07</span><div><strong style="color:#fffbf5">Hire paid lead first</strong> Volunteers additive. Separate books.</div></li>
+      <li><span class="num">08</span><div><strong style="color:#fffbf5">Entity later</strong> Revisit spin-out only if retail becomes large or unrelated.</div></li>
+    </ul>
+    </div>
+  </section>
+
+  <!-- 16 close -->
+  <section class="slide cream">
+    <div class="stage">
+      <div class="eyebrow">Still open before we spend</div>
+      <h2>Five diligence items before capital</h2>
+      <p class="lede">Confirm these five before writing checks.</p>
+      <div class="diligence">
+        <div class="card">
+          <div class="meta">01 · Fees</div>
+          <h3>Yamhill permanent fee PDF</h3>
+          <p>Pull the current <em>Licensing and Plan Review Fees</em> PDF (July 2026–June 2027) and lock plan-review + annual restaurant-license dollars. Temporary benevolent ($64) is for one-off events only — not a standing café. Budget placeholder stays $400–$1,500 until line items are confirmed.</p>
+        </div>
+        <div class="card">
+          <div class="meta">02 · Site</div>
+          <h3>Zoning &amp; occupancy</h3>
+          <p>Confirm the multipurpose building’s address allows public food service at our proposed hours, and that a portable 300–400 sq ft corner does not trigger a change-of-use or construction permit we are trying to avoid.</p>
+        </div>
+        <div class="card">
+          <div class="meta">03 · Quotes</div>
+          <h3>Furniture &amp; cart</h3>
+          <p>Get broker / vendor quotes for light-oak lounge pieces and the custom wheeled espresso cart (fold-down skirts, barista-behind-counter). Planning ranges are not quotes — freight and lead times matter before soft open.</p>
+        </div>
+        <div class="card">
+          <div class="meta">04 · Coverage</div>
+          <h3>Insurance rider</h3>
+          <p>Product liability + general liability add-on for retail food under RockPoint. Budget $500–$2,000 year one (~$40–$180 / mo) until a broker prices the actual rider against our menu and hours.</p>
+        </div>
+        <div class="card">
+          <div class="meta">05 · Counsel</div>
+          <h3>UBIT / exemption</h3>
+          <p>Nonprofit attorney + CPA on standing retail under the church: books (hospitality / retail / gifts), unrelated-business income posture, and when (if ever) a spin-out entity would be wiser than staying under RockPoint.</p>
+        </div>
+      </div>
+      <p class="lede" style="max-width:36rem">Humble Joe is Church Home with a pour spout.</p>
+      <p class="note">Planning draft only. Attorney + CPA before spend or entity decisions. · ↑↓ or scroll · RockPoint Church</p>
+    </div>
+  </section>
+
+</main>
+<script>
+  const deck = document.getElementById('deck');
+  const slides = [...document.querySelectorAll('.slide')];
+  const count = document.getElementById('count');
+  const progress = document.getElementById('progress');
+  let i = 0;
+  function go(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    count.textContent = `${i + 1} / ${slides.length}`;
+    progress.style.width = `${((i + 1) / slides.length) * 100}%`;
+  }
+  document.getElementById('next').onclick = () => go(i + 1);
+  document.getElementById('prev').onclick = () => go(i - 1);
+  window.addEventListener('keydown', (e) => {
+    if (['ArrowDown','PageDown',' ','ArrowRight'].includes(e.key)) { e.preventDefault(); go(i + 1); }
+    if (['ArrowUp','PageUp','ArrowLeft'].includes(e.key)) { e.preventDefault(); go(i - 1); }
+    if (e.key === 'Home') go(0);
+    if (e.key === 'End') go(slides.length - 1);
+  });
+  deck.addEventListener('scroll', () => {
+    const top = deck.scrollTop;
+    let best = 0, bestDist = Infinity;
+    slides.forEach((s, idx) => {
+      const d = Math.abs(s.offsetTop - top);
+      if (d < bestDist) { bestDist = d; best = idx; }
+    });
+    if (best !== i) { i = best; count.textContent = `${i + 1} / ${slides.length}`; progress.style.width = `${((i + 1) / slides.length) * 100}%`; }
+  }, { passive: true });
+  go(0);
+</script>
+</body>
+</html>
